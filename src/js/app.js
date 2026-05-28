@@ -1,5 +1,5 @@
-let currentFolderPath = null;
-let currentVideoPath = null;
+let handleStack = [];
+let currentVideoFile = null;
 let mode = 'explorer'; // 'explorer' or 'vault'
 
 const dom = {
@@ -30,7 +30,7 @@ dom.modeToggle.addEventListener('click', () => {
     dom.vaultView.classList.remove('hidden');
   } else {
     dom.vaultView.classList.add('hidden');
-    if (currentVideoPath) {
+    if (currentVideoFile) {
       dom.playerView.classList.remove('hidden');
     } else {
       dom.gridView.classList.remove('hidden');
@@ -39,53 +39,71 @@ dom.modeToggle.addEventListener('click', () => {
 });
 
 dom.selectFolderBtn.addEventListener('click', async () => {
-  const folderPath = await window.electronAPI.selectFolder();
-  if (folderPath) {
-    currentFolderPath = folderPath;
-    dom.currentFolderTitle.innerText = folderPath.split('\\').pop() || folderPath;
-    loadDirectory(folderPath, true);
+  try {
+    const dirHandle = await window.showDirectoryPicker();
+    handleStack = [dirHandle];
+    dom.currentFolderTitle.innerText = dirHandle.name;
+    loadDirectory(dirHandle);
+  } catch (err) {
+    console.log("User cancelled folder selection or error:", err);
   }
 });
 
 dom.backBtn.addEventListener('click', () => {
   dom.mainPlayer.pause();
   dom.mainPlayer.src = "";
-  currentVideoPath = null;
+  currentVideoFile = null;
   dom.playerView.classList.add('hidden');
   dom.gridView.classList.remove('hidden');
 });
 
-dom.saveNotesBtn.addEventListener('click', async () => {
-  if (!currentVideoPath) return;
+dom.saveNotesBtn.addEventListener('click', () => {
+  if (!currentVideoFile) return;
   const notes = dom.notesArea.value;
-  const data = { notes, updatedAt: Date.now() };
-  const success = await window.electronAPI.saveMetadata(currentVideoPath, data);
-  if (success) {
-    dom.saveNotesBtn.innerText = "Saved!";
-    setTimeout(() => { dom.saveNotesBtn.innerText = "Save Metadata"; }, 2000);
-  }
+  // Use localStorage based on the video file name
+  const storageKey = `vidvault_notes_${currentVideoFile.name}`;
+  localStorage.setItem(storageKey, JSON.stringify({ notes, updatedAt: Date.now() }));
+  
+  dom.saveNotesBtn.innerText = "Saved!";
+  setTimeout(() => { dom.saveNotesBtn.innerText = "Save Metadata"; }, 2000);
 });
 
-async function loadDirectory(dirPath, isRoot = false) {
-  if (isRoot) window.rootFolderPath = dirPath; // Store root for navigation logic
+async function loadDirectory(dirHandle) {
   dom.dirTree.innerHTML = `<div class="p-2 text-sm text-gray-400">Loading...</div>`;
-  const entries = await window.electronAPI.readDirectory(dirPath);
   
-  // Render Tree (Folders)
-  const folders = entries.filter(e => e.isDirectory);
+  const folders = [];
+  const videos = [];
+
+  try {
+    for await (const entry of dirHandle.values()) {
+      if (entry.kind === 'directory') {
+        folders.push(entry);
+      } else if (entry.kind === 'file' && entry.name.match(/\.(mp4|mkv|webm|avi|mov|m4v)$/i)) {
+        videos.push(entry);
+      }
+    }
+  } catch (err) {
+    console.error("Error reading directory:", err);
+    dom.dirTree.innerHTML = `<div class="text-sm text-red-500 p-2">Permission error.</div>`;
+    return;
+  }
+
+  // Sort alphabetically
+  folders.sort((a, b) => a.name.localeCompare(b.name));
+  videos.sort((a, b) => a.name.localeCompare(b.name));
+
   dom.dirTree.innerHTML = '';
   
   // Add "Go Up" button if not at root
-  if (window.rootFolderPath && dirPath !== window.rootFolderPath) {
+  if (handleStack.length > 1) {
     const upBtn = document.createElement('div');
     upBtn.className = "cursor-pointer p-2 mb-2 bg-indigo-900/30 hover:bg-indigo-800/40 border border-indigo-500/30 rounded text-sm text-indigo-300 font-medium flex items-center gap-2 transition-colors";
     upBtn.innerHTML = `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg> Go Up`;
     upBtn.addEventListener('click', () => {
-      // Very simple parent directory extraction (works for Win & Mac/Linux)
-      const parentDir = dirPath.split(/[\\/]/).slice(0, -1).join('\\') || dirPath.split(/[\\/]/).slice(0, -1).join('/');
-      currentFolderPath = parentDir;
-      dom.currentFolderTitle.innerText = parentDir.split(/[\\/]/).pop() || "Library";
-      loadDirectory(parentDir);
+      handleStack.pop(); // Remove current
+      const parentHandle = handleStack[handleStack.length - 1];
+      dom.currentFolderTitle.innerText = parentHandle.name;
+      loadDirectory(parentHandle);
     });
     dom.dirTree.appendChild(upBtn);
   }
@@ -100,26 +118,29 @@ async function loadDirectory(dirPath, isRoot = false) {
       const el = document.createElement('div');
       el.className = "cursor-pointer p-2 hover:bg-gray-800 rounded-md text-sm text-gray-300 truncate transition-colors flex items-center gap-2";
       el.innerHTML = `<svg class="w-4 h-4 text-gray-500 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path d="M2 6a2 2 0 012-2h4l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V6z"></path></svg> ${f.name}`;
-      el.title = f.path;
+      el.title = f.name;
       el.addEventListener('click', () => {
-        currentFolderPath = f.path;
+        handleStack.push(f);
         dom.currentFolderTitle.innerText = f.name;
-        loadDirectory(f.path);
+        loadDirectory(f);
       });
       dom.dirTree.appendChild(el);
     });
   }
 
   // Render Grid (Videos)
-  const videos = entries.filter(e => !e.isDirectory && e.name.match(/\.(mp4|mkv|webm|avi|mov|m4v)$/i));
   dom.videoGrid.innerHTML = '';
   
   if (videos.length === 0) {
     dom.videoGrid.innerHTML = `<div class="col-span-full text-center text-gray-500 py-10">No videos found in this folder.</div>`;
   } else {
-    videos.forEach(v => {
+    for (const v of videos) {
       const card = document.createElement('div');
       card.className = "vid-card cursor-pointer group bg-[#1a1a1a] rounded-xl overflow-hidden relative border border-gray-800/80 shadow-lg";
+      
+      // We don't have file size synchronously, but we can just show format
+      const ext = v.name.split('.').pop().toUpperCase();
+
       card.innerHTML = `
         <div class="aspect-video bg-gradient-to-br from-gray-900 to-black relative flex items-center justify-center overflow-hidden">
            <svg class="w-10 h-10 text-gray-700/50 group-hover:scale-110 transition-transform duration-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
@@ -132,20 +153,22 @@ async function loadDirectory(dirPath, isRoot = false) {
         <div class="p-4 bg-gradient-to-b from-[#1a1a1a] to-[#121212]">
           <h3 class="text-sm font-semibold text-gray-200 truncate group-hover:text-indigo-400 transition-colors" title="${v.name}">${v.name}</h3>
           <div class="flex justify-between items-center mt-2">
-            <span class="text-xs text-gray-500 font-medium bg-gray-900 px-2 py-0.5 rounded border border-gray-800">MP4</span>
-            <span class="text-xs text-gray-500">${(v.size / (1024*1024)).toFixed(1)} MB</span>
+            <span class="text-xs text-gray-500 font-medium bg-gray-900 px-2 py-0.5 rounded border border-gray-800">${ext}</span>
           </div>
         </div>
       `;
-      card.addEventListener('click', () => playVideo(v.path));
+      card.addEventListener('click', async () => {
+        const file = await v.getFile();
+        playVideo(file);
+      });
       dom.videoGrid.appendChild(card);
-    });
+    }
   }
 }
 
-async function playVideo(absolutePath) {
-  currentVideoPath = absolutePath;
-  const url = window.electronAPI.getFileUrl(absolutePath);
+async function playVideo(file) {
+  currentVideoFile = file;
+  const url = URL.createObjectURL(file);
   
   dom.gridView.classList.add('hidden');
   dom.playerView.classList.remove('hidden');
@@ -160,13 +183,17 @@ async function playVideo(absolutePath) {
     document.getElementById('player-error').classList.remove('hidden');
   }
 
-  // Load Sidecar Metadata
-  dom.notesArea.value = "Loading notes...";
-  const meta = await window.electronAPI.getMetadata(absolutePath);
-  if (meta && meta.notes) {
-    dom.notesArea.value = meta.notes;
-  } else {
-    dom.notesArea.value = "";
+  // Load Sidecar Metadata from localStorage
+  dom.notesArea.value = "";
+  const storageKey = `vidvault_notes_${file.name}`;
+  const metaStr = localStorage.getItem(storageKey);
+  if (metaStr) {
+    try {
+      const meta = JSON.parse(metaStr);
+      if (meta.notes) {
+        dom.notesArea.value = meta.notes;
+      }
+    } catch(e) {}
   }
 }
 
