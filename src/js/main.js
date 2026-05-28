@@ -31,11 +31,17 @@ app.whenReady().then(() => {
 
   // Register modern custom protocol for video streaming
   const { net } = require('electron');
+  const { pathToFileURL } = require('url');
+
   protocol.handle('vidvault', (request) => {
-    // request.url is safely encoded. Just replace the scheme.
-    const fileUrl = request.url.replace('vidvault://local/', 'file:///');
+    // 1. Strip the custom scheme prefix
+    let urlStr = request.url.replace('vidvault://local/', '');
+    // 2. Decode the URI to get the raw absolute path string (e.g. C:/Users/Name/Video.mp4)
+    let absolutePath = decodeURIComponent(urlStr);
+    // 3. Let Node.js safely format it as a valid file:// URI for Windows/Mac
+    const fileUrl = pathToFileURL(absolutePath).toString();
     
-    // Use Electron's native net.fetch which handles Range requests automatically!
+    // Use Electron's native net.fetch which handles Range requests automatically
     return net.fetch(fileUrl, {
       headers: request.headers
     });
