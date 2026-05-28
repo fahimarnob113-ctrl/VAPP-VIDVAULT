@@ -86,19 +86,22 @@ async function loadDirectory(dirPath) {
   } else {
     videos.forEach(v => {
       const card = document.createElement('div');
-      card.className = "vid-card cursor-pointer group bg-yt-dark rounded-lg overflow-hidden relative border border-transparent hover:border-gray-600 transition";
+      card.className = "vid-card cursor-pointer group bg-[#1a1a1a] rounded-xl overflow-hidden relative border border-gray-800/80 shadow-lg";
       card.innerHTML = `
-        <div class="aspect-video bg-black relative flex items-center justify-center">
-           <span class="text-gray-500 text-xs">Video Placeholder</span>
-           <div class="play-overlay absolute inset-0 bg-black/40 opacity-0 transition flex items-center justify-center">
-              <div class="w-12 h-12 bg-yt-red rounded-full flex items-center justify-center">
-                <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+        <div class="aspect-video bg-gradient-to-br from-gray-900 to-black relative flex items-center justify-center overflow-hidden">
+           <svg class="w-10 h-10 text-gray-700/50 group-hover:scale-110 transition-transform duration-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+           <div class="play-overlay absolute inset-0 bg-indigo-900/40 backdrop-blur-[2px] opacity-0 flex items-center justify-center">
+              <div class="w-14 h-14 bg-indigo-500 rounded-full flex items-center justify-center shadow-2xl shadow-indigo-500/50 scale-90 group-hover:scale-100 transition-transform">
+                <svg class="w-7 h-7 text-white ml-1" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
               </div>
            </div>
         </div>
-        <div class="p-3">
-          <h3 class="text-sm font-semibold text-yt-lightText truncate" title="${v.name}">${v.name}</h3>
-          <p class="text-xs text-gray-400 mt-1">${(v.size / (1024*1024)).toFixed(2)} MB</p>
+        <div class="p-4 bg-gradient-to-b from-[#1a1a1a] to-[#121212]">
+          <h3 class="text-sm font-semibold text-gray-200 truncate group-hover:text-indigo-400 transition-colors" title="${v.name}">${v.name}</h3>
+          <div class="flex justify-between items-center mt-2">
+            <span class="text-xs text-gray-500 font-medium bg-gray-900 px-2 py-0.5 rounded border border-gray-800">MP4</span>
+            <span class="text-xs text-gray-500">${(v.size / (1024*1024)).toFixed(1)} MB</span>
+          </div>
         </div>
       `;
       card.addEventListener('click', () => playVideo(v.path));

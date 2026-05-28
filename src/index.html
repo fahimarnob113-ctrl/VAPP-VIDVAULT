@@ -3,22 +3,24 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>VidVault Open Explorer</title>
-  <!-- Expecting tailwind to build to output.css -->
+  <title>VidVault</title>
   <link rel="stylesheet" href="css/output.css">
 </head>
-<body class="bg-yt-black text-yt-lightText h-screen flex flex-col">
+<body class="bg-[#0a0a0a] text-gray-200 h-screen flex flex-col font-sans select-none">
 
   <!-- Header -->
-  <header class="h-14 bg-yt-dark flex items-center px-4 justify-between border-b border-gray-800 shrink-0">
+  <header class="h-16 bg-[#121212] flex items-center px-6 justify-between border-b border-gray-800/50 shrink-0 shadow-sm z-20">
     <div class="flex items-center gap-4">
-      <h1 class="text-xl font-bold tracking-tight">VidVault</h1>
-      <button id="mode-toggle" class="bg-yt-hover px-3 py-1 rounded text-sm text-gray-300 hover:text-white transition">
+      <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg">
+        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+      </div>
+      <h1 class="text-xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-gray-100 to-gray-400">VidVault</h1>
+      <button id="mode-toggle" class="ml-4 bg-gray-800/50 hover:bg-gray-700/80 px-3 py-1.5 rounded-full text-xs font-medium text-gray-400 hover:text-white transition-colors border border-gray-700/50">
         Mode: Open Explorer
       </button>
     </div>
     <div>
-      <button id="select-folder-btn" class="bg-yt-blue text-white px-4 py-1.5 rounded font-medium text-sm hover:bg-blue-600 transition">
+      <button id="select-folder-btn" class="bg-indigo-600/90 text-white px-5 py-2 rounded-md font-medium text-sm hover:bg-indigo-500 transition-all shadow-md shadow-indigo-900/20 active:scale-95">
         Open Folder
       </button>
     </div>
@@ -28,44 +30,45 @@
   <main class="flex-1 flex overflow-hidden relative">
     
     <!-- Sidebar -->
-    <aside class="w-64 bg-yt-dark border-r border-gray-800 flex flex-col shrink-0">
-      <div class="p-4 text-sm font-semibold uppercase text-gray-400">Directory Tree</div>
-      <div id="dir-tree" class="flex-1 overflow-y-auto p-2 space-y-1">
-        <div class="text-sm text-gray-500 italic p-2">No folder selected.</div>
+    <aside class="w-64 bg-[#121212] flex flex-col shrink-0 border-r border-gray-800/50 z-10">
+      <div class="p-5 pb-2 text-xs font-bold tracking-widest uppercase text-gray-500">Directory Tree</div>
+      <div id="dir-tree" class="flex-1 overflow-y-auto p-3 space-y-1 custom-scroll">
+        <div class="text-sm text-gray-600 italic p-2 bg-gray-900/30 rounded-md text-center mt-4">No folder selected</div>
       </div>
     </aside>
 
-    <!-- Content Area (Grid vs Player) -->
-    <div class="flex-1 flex flex-col relative bg-[#0f0f0f]">
+    <!-- Content Area -->
+    <div class="flex-1 flex flex-col relative bg-gradient-to-b from-[#161616] to-[#0a0a0a]">
       
       <!-- Video Grid View -->
-      <div id="grid-view" class="flex-1 overflow-y-auto p-6 hidden">
-        <div class="flex justify-between items-center mb-6">
-          <h2 id="current-folder-title" class="text-2xl font-bold">Videos</h2>
+      <div id="grid-view" class="flex-1 overflow-y-auto p-8 custom-scroll hidden">
+        <div class="flex justify-between items-center mb-8">
+          <h2 id="current-folder-title" class="text-3xl font-bold text-gray-100 tracking-tight drop-shadow-sm">Library</h2>
         </div>
-        <div id="video-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+        <div id="video-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
           <!-- Video Cards Injected Here -->
         </div>
       </div>
 
       <!-- Video Player View -->
-      <div id="player-view" class="flex-1 flex hidden relative bg-black">
-        <div class="flex-1 flex flex-col justify-center items-center">
-          <button id="back-btn" class="absolute top-4 left-4 z-10 bg-black/50 hover:bg-black/80 p-2 rounded-full transition">
-            Back
+      <div id="player-view" class="flex-1 flex hidden relative bg-black/95">
+        <div class="flex-1 flex flex-col justify-center items-center relative p-4 group">
+          <button id="back-btn" class="absolute top-6 left-6 z-20 bg-gray-900/80 hover:bg-gray-800 text-gray-300 hover:text-white p-2.5 rounded-full transition-all border border-gray-700 shadow-xl opacity-0 group-hover:opacity-100">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
           </button>
-          <video id="main-player" class="w-full max-h-full" controls></video>
+          <video id="main-player" class="w-full max-h-full rounded-lg shadow-2xl bg-black" controls></video>
         </div>
         
         <!-- Right Sidebar (Notes) -->
-        <div class="w-80 bg-yt-dark border-l border-gray-800 flex flex-col shrink-0 relative z-10">
-          <div class="p-4 border-b border-gray-800">
-            <h3 class="font-bold">Metadata / Notes</h3>
+        <div class="w-80 bg-[#121212] border-l border-gray-800/50 flex flex-col shrink-0 relative z-10 shadow-2xl">
+          <div class="p-5 border-b border-gray-800/50 flex items-center gap-2">
+            <svg class="w-4 h-4 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+            <h3 class="font-bold text-gray-200">Video Notes</h3>
           </div>
-          <div class="flex-1 p-4 flex flex-col">
-            <textarea id="notes-area" class="w-full flex-1 bg-[#0f0f0f] border border-gray-700 rounded p-3 text-sm resize-none focus:outline-none focus:border-yt-blue" placeholder="Write markdown notes here... Use [[#MM:SS]] for timestamps."></textarea>
-            <div class="mt-4 flex justify-end">
-              <button id="save-notes-btn" class="bg-yt-blue text-white px-4 py-1.5 rounded font-medium text-sm hover:bg-blue-600 transition">Save Metadata</button>
+          <div class="flex-1 p-5 flex flex-col gap-4">
+            <textarea id="notes-area" class="w-full flex-1 bg-[#1a1a1a] border border-gray-800 rounded-lg p-4 text-sm text-gray-300 resize-none focus:outline-none focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/50 transition-all custom-scroll shadow-inner leading-relaxed" placeholder="Jot down markdown notes here...&#10;&#10;Use [[#MM:SS]] for timestamps."></textarea>
+            <div class="flex justify-end">
+              <button id="save-notes-btn" class="bg-gray-800 hover:bg-gray-700 text-gray-200 px-5 py-2 rounded-md font-medium text-sm transition-all border border-gray-700 w-full active:scale-95">Save Metadata</button>
             </div>
           </div>
         </div>
