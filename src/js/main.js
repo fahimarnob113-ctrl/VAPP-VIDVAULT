@@ -29,51 +29,18 @@ function createWindow() {
 app.whenReady().then(() => {
   createWindow();
 
-  // Register custom streaming protocol
-  protocol.registerStreamProtocol('vidvault', (request, callback) => {
+  // Register modern custom protocol for video streaming
+  const { net } = require('electron');
+  protocol.handle('vidvault', (request) => {
     let url = request.url.replace('vidvault://local/', '');
-    // Decode URI component (e.g. %20 -> space)
     url = decodeURIComponent(url);
-
-    // Normalize path for Windows
-    const filePath = path.normalize(url);
-
-    if (!fs.existsSync(filePath)) {
-      return callback({ statusCode: 404, data: null });
-    }
-
-    const stat = fs.statSync(filePath);
-    const fileSize = stat.size;
-    const range = request.headers.Range || request.headers.range;
-
-    if (range) {
-      const parts = range.replace(/bytes=/, "").split("-");
-      const start = parseInt(parts[0], 10);
-      const end = parts[1] ? parseInt(parts[1], 10) : fileSize - 1;
-      const chunksize = (end - start) + 1;
-      const fileStream = fs.createReadStream(filePath, { start, end });
-
-      callback({
-        statusCode: 206,
-        headers: {
-          'Content-Range': `bytes ${start}-${end}/${fileSize}`,
-          'Accept-Ranges': 'bytes',
-          'Content-Length': chunksize,
-          'Content-Type': 'video/mp4', // Simplification for MVP
-        },
-        data: fileStream
-      });
-    } else {
-      const fileStream = fs.createReadStream(filePath);
-      callback({
-        statusCode: 200,
-        headers: {
-          'Content-Length': fileSize,
-          'Content-Type': 'video/mp4',
-        },
-        data: fileStream
-      });
-    }
+    // Convert to standard file:// URI
+    const fileUrl = 'file:///' + url.replace(/\\/g, '/');
+    
+    // Use Electron's native net.fetch which handles Range requests automatically!
+    return net.fetch(fileUrl, {
+      headers: request.headers
+    });
   });
 
   app.on('activate', function () {
