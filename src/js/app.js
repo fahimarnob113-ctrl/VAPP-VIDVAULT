@@ -57,15 +57,25 @@ dom.backBtn.addEventListener('click', () => {
   dom.gridView.classList.remove('hidden');
 });
 
-dom.saveNotesBtn.addEventListener('click', () => {
+dom.saveNotesBtn.addEventListener('click', async () => {
   if (!currentVideoFile) return;
   const notes = dom.notesArea.value;
-  // Use localStorage based on the video file name
-  const storageKey = `vidvault_notes_${currentVideoFile.name}`;
-  localStorage.setItem(storageKey, JSON.stringify({ notes, updatedAt: Date.now() }));
   
-  dom.saveNotesBtn.innerText = "Saved!";
-  setTimeout(() => { dom.saveNotesBtn.innerText = "Save Metadata"; }, 2000);
+  try {
+    const currentDirHandle = handleStack[handleStack.length - 1];
+    // This will explicitly prompt the user for write permission if not already granted
+    const metaHandle = await currentDirHandle.getFileHandle(`${currentVideoFile.name}.meta.json`, { create: true });
+    const writable = await metaHandle.createWritable();
+    await writable.write(JSON.stringify({ notes, updatedAt: Date.now() }, null, 2));
+    await writable.close();
+    
+    dom.saveNotesBtn.innerText = "Saved!";
+    setTimeout(() => { dom.saveNotesBtn.innerText = "Save Metadata"; }, 2000);
+  } catch (err) {
+    console.error("Error saving metadata:", err);
+    dom.saveNotesBtn.innerText = "Error (Check Permissions)";
+    setTimeout(() => { dom.saveNotesBtn.innerText = "Save Metadata"; }, 2000);
+  }
 });
 
 async function loadDirectory(dirHandle) {
@@ -183,17 +193,19 @@ async function playVideo(file) {
     document.getElementById('player-error').classList.remove('hidden');
   }
 
-  // Load Sidecar Metadata from localStorage
+  // Load Sidecar Metadata from File System
   dom.notesArea.value = "";
-  const storageKey = `vidvault_notes_${file.name}`;
-  const metaStr = localStorage.getItem(storageKey);
-  if (metaStr) {
-    try {
-      const meta = JSON.parse(metaStr);
-      if (meta.notes) {
-        dom.notesArea.value = meta.notes;
-      }
-    } catch(e) {}
+  try {
+    const currentDirHandle = handleStack[handleStack.length - 1];
+    const metaHandle = await currentDirHandle.getFileHandle(`${file.name}.meta.json`, { create: false });
+    const metaFile = await metaHandle.getFile();
+    const metaStr = await metaFile.text();
+    const meta = JSON.parse(metaStr);
+    if (meta.notes) {
+      dom.notesArea.value = meta.notes;
+    }
+  } catch(e) {
+    // Expected error if the sidecar file doesn't exist yet
   }
 }
 
