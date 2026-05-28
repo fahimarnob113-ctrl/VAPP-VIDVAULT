@@ -30,21 +30,55 @@ app.whenReady().then(() => {
   createWindow();
 
   // Register modern custom protocol for video streaming
-  const { net } = require('electron');
-  const { pathToFileURL } = require('url');
+  const { Readable } = require('stream');
 
   protocol.handle('vidvault', (request) => {
     // 1. Strip the custom scheme prefix
     let urlStr = request.url.replace('vidvault://local/', '');
-    // 2. Decode the URI to get the raw absolute path string (e.g. C:/Users/Name/Video.mp4)
+    // 2. Decode the URI to get the raw absolute path string
     let absolutePath = decodeURIComponent(urlStr);
-    // 3. Let Node.js safely format it as a valid file:// URI for Windows/Mac
-    const fileUrl = pathToFileURL(absolutePath).toString();
+    const filePath = path.normalize(absolutePath);
+
+    if (!fs.existsSync(filePath)) {
+      return new Response('Not found', { status: 404 });
+    }
+
+    const stat = fs.statSync(filePath);
+    const fileSize = stat.size;
     
-    // Use Electron's native net.fetch which handles Range requests automatically
-    return net.fetch(fileUrl, {
-      headers: request.headers
-    });
+    // Electron's request.headers is a standard Headers object in protocol.handle
+    const range = request.headers.get('Range') || request.headers.get('range');
+
+    if (range) {
+      const parts = range.replace(/bytes=/, "").split("-");
+      const start = parseInt(parts[0], 10);
+      const end = parts[1] && parts[1] !== "" ? parseInt(parts[1], 10) : fileSize - 1;
+      const chunksize = (end - start) + 1;
+      
+      const fileStream = fs.createReadStream(filePath, { start, end });
+      const webStream = Readable.toWeb(fileStream);
+
+      return new Response(webStream, {
+        status: 206,
+        headers: {
+          'Content-Range': `bytes ${start}-${end}/${fileSize}`,
+          'Accept-Ranges': 'bytes',
+          'Content-Length': chunksize,
+          'Content-Type': 'video/mp4',
+        }
+      });
+    } else {
+      const fileStream = fs.createReadStream(filePath);
+      const webStream = Readable.toWeb(fileStream);
+
+      return new Response(webStream, {
+        status: 200,
+        headers: {
+          'Content-Length': fileSize,
+          'Content-Type': 'video/mp4',
+        }
+      });
+    }
   });
 
   app.on('activate', function () {
