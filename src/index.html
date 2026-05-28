@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' vidvault: data:; media-src 'self' vidvault: data: blob:;">
   <title>VidVault</title>
   <link rel="stylesheet" href="css/output.css">
 </head>
@@ -56,6 +57,14 @@
           <button id="back-btn" class="absolute top-6 left-6 z-20 bg-gray-900/80 hover:bg-gray-800 text-gray-300 hover:text-white p-2.5 rounded-full transition-all border border-gray-700 shadow-xl opacity-0 group-hover:opacity-100">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
           </button>
+          
+          <div id="player-error" class="absolute top-6 right-6 z-50 bg-red-900/90 text-white px-4 py-3 rounded-lg shadow-2xl backdrop-blur-md hidden border border-red-500/50 flex items-center gap-3">
+            <svg class="w-6 h-6 text-red-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            <div>
+              <p class="font-bold text-sm">Playback Error</p>
+              <p class="text-xs text-red-200">Format not supported (Use MP4/WebM)</p>
+            </div>
+          </div>
           
           <div class="relative w-full max-w-5xl rounded-lg overflow-hidden shadow-2xl bg-black">
             <!-- Native video without controls -->

@@ -117,8 +117,15 @@ async function playVideo(absolutePath) {
   dom.gridView.classList.add('hidden');
   dom.playerView.classList.remove('hidden');
   
+  document.getElementById('player-error').classList.add('hidden');
   dom.mainPlayer.src = url;
-  dom.mainPlayer.play();
+  
+  try {
+    await dom.mainPlayer.play();
+  } catch (err) {
+    console.error("Playback error:", err);
+    document.getElementById('player-error').classList.remove('hidden');
+  }
 
   // Load Sidecar Metadata
   dom.notesArea.value = "Loading notes...";
