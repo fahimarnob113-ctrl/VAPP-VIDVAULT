@@ -6,6 +6,7 @@ const dom = {
   selectFolderBtn: document.getElementById('select-folder-btn'),
   dirTree: document.getElementById('dir-tree'),
   gridView: document.getElementById('grid-view'),
+  vaultView: document.getElementById('vault-view'),
   videoGrid: document.getElementById('video-grid'),
   playerView: document.getElementById('player-view'),
   mainPlayer: document.getElementById('main-player'),
@@ -22,7 +23,19 @@ dom.gridView.classList.remove('hidden');
 dom.modeToggle.addEventListener('click', () => {
   mode = mode === 'explorer' ? 'vault' : 'explorer';
   dom.modeToggle.innerText = `Mode: ${mode === 'explorer' ? 'Open Explorer' : 'Indexed Vault'}`;
-  // For MVP, we primarily support Open Explorer. Indexed Vault is a placeholder for future db logic.
+  
+  if (mode === 'vault') {
+    dom.gridView.classList.add('hidden');
+    dom.playerView.classList.add('hidden');
+    dom.vaultView.classList.remove('hidden');
+  } else {
+    dom.vaultView.classList.add('hidden');
+    if (currentVideoPath) {
+      dom.playerView.classList.remove('hidden');
+    } else {
+      dom.gridView.classList.remove('hidden');
+    }
+  }
 });
 
 dom.selectFolderBtn.addEventListener('click', async () => {
@@ -30,7 +43,7 @@ dom.selectFolderBtn.addEventListener('click', async () => {
   if (folderPath) {
     currentFolderPath = folderPath;
     dom.currentFolderTitle.innerText = folderPath.split('\\').pop() || folderPath;
-    loadDirectory(folderPath);
+    loadDirectory(folderPath, true);
   }
 });
 
@@ -53,20 +66,40 @@ dom.saveNotesBtn.addEventListener('click', async () => {
   }
 });
 
-async function loadDirectory(dirPath) {
+async function loadDirectory(dirPath, isRoot = false) {
+  if (isRoot) window.rootFolderPath = dirPath; // Store root for navigation logic
   dom.dirTree.innerHTML = `<div class="p-2 text-sm text-gray-400">Loading...</div>`;
   const entries = await window.electronAPI.readDirectory(dirPath);
   
   // Render Tree (Folders)
   const folders = entries.filter(e => e.isDirectory);
   dom.dirTree.innerHTML = '';
+  
+  // Add "Go Up" button if not at root
+  if (window.rootFolderPath && dirPath !== window.rootFolderPath) {
+    const upBtn = document.createElement('div');
+    upBtn.className = "cursor-pointer p-2 mb-2 bg-indigo-900/30 hover:bg-indigo-800/40 border border-indigo-500/30 rounded text-sm text-indigo-300 font-medium flex items-center gap-2 transition-colors";
+    upBtn.innerHTML = `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg> Go Up`;
+    upBtn.addEventListener('click', () => {
+      // Very simple parent directory extraction (works for Win & Mac/Linux)
+      const parentDir = dirPath.split(/[\\/]/).slice(0, -1).join('\\') || dirPath.split(/[\\/]/).slice(0, -1).join('/');
+      currentFolderPath = parentDir;
+      dom.currentFolderTitle.innerText = parentDir.split(/[\\/]/).pop() || "Library";
+      loadDirectory(parentDir);
+    });
+    dom.dirTree.appendChild(upBtn);
+  }
+
   if (folders.length === 0) {
-    dom.dirTree.innerHTML = `<div class="text-sm text-gray-500 italic p-2">No subfolders.</div>`;
+    const emptyMsg = document.createElement('div');
+    emptyMsg.className = "text-sm text-gray-500 italic p-2";
+    emptyMsg.innerText = "No subfolders.";
+    dom.dirTree.appendChild(emptyMsg);
   } else {
     folders.forEach(f => {
       const el = document.createElement('div');
-      el.className = "cursor-pointer p-2 hover:bg-yt-hover rounded text-sm text-gray-300 truncate";
-      el.innerText = `📁 ${f.name}`;
+      el.className = "cursor-pointer p-2 hover:bg-gray-800 rounded-md text-sm text-gray-300 truncate transition-colors flex items-center gap-2";
+      el.innerHTML = `<svg class="w-4 h-4 text-gray-500 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path d="M2 6a2 2 0 012-2h4l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V6z"></path></svg> ${f.name}`;
       el.title = f.path;
       el.addEventListener('click', () => {
         currentFolderPath = f.path;

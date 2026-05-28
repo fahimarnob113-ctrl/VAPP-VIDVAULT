@@ -32,10 +32,8 @@ app.whenReady().then(() => {
   // Register modern custom protocol for video streaming
   const { net } = require('electron');
   protocol.handle('vidvault', (request) => {
-    let url = request.url.replace('vidvault://local/', '');
-    url = decodeURIComponent(url);
-    // Convert to standard file:// URI
-    const fileUrl = 'file:///' + url.replace(/\\/g, '/');
+    // request.url is safely encoded. Just replace the scheme.
+    const fileUrl = request.url.replace('vidvault://local/', 'file:///');
     
     // Use Electron's native net.fetch which handles Range requests automatically!
     return net.fetch(fileUrl, {
