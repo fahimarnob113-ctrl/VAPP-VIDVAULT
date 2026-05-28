@@ -50,13 +50,50 @@
         </div>
       </div>
 
-      <!-- Video Player View -->
       <div id="player-view" class="flex-1 flex hidden relative bg-black/95">
         <div class="flex-1 flex flex-col justify-center items-center relative p-4 group">
+          
           <button id="back-btn" class="absolute top-6 left-6 z-20 bg-gray-900/80 hover:bg-gray-800 text-gray-300 hover:text-white p-2.5 rounded-full transition-all border border-gray-700 shadow-xl opacity-0 group-hover:opacity-100">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
           </button>
-          <video id="main-player" class="w-full max-h-full rounded-lg shadow-2xl bg-black" controls></video>
+          
+          <div class="relative w-full max-w-5xl rounded-lg overflow-hidden shadow-2xl bg-black">
+            <!-- Native video without controls -->
+            <video id="main-player" class="w-full block"></video>
+            
+            <!-- Custom Control Bar -->
+            <div id="custom-controls" class="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/90 via-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col gap-2 pointer-events-none">
+              
+              <!-- Timeline -->
+              <div class="flex items-center gap-3 w-full pointer-events-auto">
+                <span id="time-current" class="text-xs text-gray-300 font-medium font-mono">00:00</span>
+                <input type="range" id="timeline-slider" class="flex-1 h-1.5 bg-gray-600 rounded-lg appearance-none cursor-pointer accent-indigo-500 hover:h-2 transition-all" min="0" max="100" value="0">
+                <span id="time-total" class="text-xs text-gray-400 font-medium font-mono">00:00</span>
+              </div>
+              
+              <!-- Buttons & Volume -->
+              <div class="flex items-center justify-between pointer-events-auto mt-1">
+                <div class="flex items-center gap-4">
+                  <button id="play-pause-btn" class="text-white hover:text-indigo-400 transition-colors">
+                    <svg id="icon-play" class="w-7 h-7" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                    <svg id="icon-pause" class="w-7 h-7 hidden" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+                  </button>
+                  <div class="flex items-center gap-2 group/vol">
+                    <button id="mute-btn" class="text-gray-300 hover:text-white transition-colors">
+                      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072M17.657 6.343a8 8 0 010 11.314M12 4v16m-4-4H4a2 2 0 01-2-2v-4a2 2 0 012-2h4l4-4z"></path></svg>
+                    </button>
+                    <input type="range" id="volume-slider" class="w-0 group-hover/vol:w-20 opacity-0 group-hover/vol:opacity-100 h-1.5 bg-gray-600 rounded-lg appearance-none cursor-pointer accent-indigo-500 transition-all duration-300 origin-left" min="0" max="1" step="0.05" value="1">
+                  </div>
+                </div>
+                
+                <div class="flex items-center gap-3">
+                  <button id="fullscreen-btn" class="text-gray-300 hover:text-white transition-colors">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"></path></svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
         
         <!-- Right Sidebar (Notes) -->
