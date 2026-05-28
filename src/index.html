@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VidVault Open Explorer</title>
+  <!-- Expecting tailwind to build to output.css -->
+  <link rel="stylesheet" href="css/output.css">
+</head>
+<body class="bg-yt-black text-yt-lightText h-screen flex flex-col">
+
+  <!-- Header -->
+  <header class="h-14 bg-yt-dark flex items-center px-4 justify-between border-b border-gray-800 shrink-0">
+    <div class="flex items-center gap-4">
+      <h1 class="text-xl font-bold tracking-tight">VidVault</h1>
+      <button id="mode-toggle" class="bg-yt-hover px-3 py-1 rounded text-sm text-gray-300 hover:text-white transition">
+        Mode: Open Explorer
+      </button>
+    </div>
+    <div>
+      <button id="select-folder-btn" class="bg-yt-blue text-white px-4 py-1.5 rounded font-medium text-sm hover:bg-blue-600 transition">
+        Open Folder
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Workspace -->
+  <main class="flex-1 flex overflow-hidden relative">
+    
+    <!-- Sidebar -->
+    <aside class="w-64 bg-yt-dark border-r border-gray-800 flex flex-col shrink-0">
+      <div class="p-4 text-sm font-semibold uppercase text-gray-400">Directory Tree</div>
+      <div id="dir-tree" class="flex-1 overflow-y-auto p-2 space-y-1">
+        <div class="text-sm text-gray-500 italic p-2">No folder selected.</div>
+      </div>
+    </aside>
+
+    <!-- Content Area (Grid vs Player) -->
+    <div class="flex-1 flex flex-col relative bg-[#0f0f0f]">
+      
+      <!-- Video Grid View -->
+      <div id="grid-view" class="flex-1 overflow-y-auto p-6 hidden">
+        <div class="flex justify-between items-center mb-6">
+          <h2 id="current-folder-title" class="text-2xl font-bold">Videos</h2>
+        </div>
+        <div id="video-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+          <!-- Video Cards Injected Here -->
+        </div>
+      </div>
+
+      <!-- Video Player View -->
+      <div id="player-view" class="flex-1 flex hidden relative bg-black">
+        <div class="flex-1 flex flex-col justify-center items-center">
+          <button id="back-btn" class="absolute top-4 left-4 z-10 bg-black/50 hover:bg-black/80 p-2 rounded-full transition">
+            Back
+          </button>
+          <video id="main-player" class="w-full max-h-full" controls></video>
+        </div>
+        
+        <!-- Right Sidebar (Notes) -->
+        <div class="w-80 bg-yt-dark border-l border-gray-800 flex flex-col shrink-0 relative z-10">
+          <div class="p-4 border-b border-gray-800">
+            <h3 class="font-bold">Metadata / Notes</h3>
+          </div>
+          <div class="flex-1 p-4 flex flex-col">
+            <textarea id="notes-area" class="w-full flex-1 bg-[#0f0f0f] border border-gray-700 rounded p-3 text-sm resize-none focus:outline-none focus:border-yt-blue" placeholder="Write markdown notes here... Use [[#MM:SS]] for timestamps."></textarea>
+            <div class="mt-4 flex justify-end">
+              <button id="save-notes-btn" class="bg-yt-blue text-white px-4 py-1.5 rounded font-medium text-sm hover:bg-blue-600 transition">Save Metadata</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <script src="js/app.js"></script>
+</body>
+</html>
